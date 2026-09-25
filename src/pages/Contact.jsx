@@ -40,21 +40,56 @@ function Field({ id, label, error, children }) {
   );
 }
 
+const emptyForm = { name: "", email: "", message: "" };
+
+async function sendMessage(values, honey) {
+  const response = await fetch(`https://formsubmit.co/ajax/${profile.email}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      name: values.name.trim(),
+      email: values.email.trim(),
+      message: values.message.trim(),
+      _subject: `Portfolio message from ${values.name.trim()}`,
+      _replyto: values.email.trim(),
+      _template: "table",
+      _captcha: "false",
+      _honey: honey,
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || String(data.success) !== "true") {
+    throw new Error(data.message || `Request failed with ${response.status}`);
+  }
+}
+
 export default function Contact() {
-  const [values, setValues] = useState({ name: "", email: "", message: "" });
+  const [values, setValues] = useState(emptyForm);
   const [errors, setErrors] = useState({});
+  const [status, setStatus] = useState("idle");
+  const [honey, setHoney] = useState("");
 
   const update = (key) => (event) => setValues((current) => ({ ...current, [key]: event.target.value }));
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
+    if (status === "sending") return;
     const found = validate(values);
     setErrors(found);
     if (Object.keys(found).length) return;
-    const subject = encodeURIComponent(`Portfolio message from ${values.name}`);
-    const body = encodeURIComponent(`${values.message}\n\n${values.name}\n${values.email}`);
-    window.location.href = `mailto:${profile.email}?subject=${subject}&body=${body}`;
+    setStatus("sending");
+    try {
+      await sendMessage(values, honey);
+      setValues(emptyForm);
+      setStatus("sent");
+    } catch {
+      setStatus("error");
+    }
   };
+
+  const mailtoFallback = `mailto:${profile.email}?subject=${encodeURIComponent(
+    `Portfolio message from ${values.name}`,
+  )}&body=${encodeURIComponent(`${values.message}\n\n${values.name}\n${values.email}`)}`;
 
   const describe = (key) => (errors[key] ? `${key}-error` : undefined);
 
@@ -63,7 +98,7 @@ export default function Contact() {
       <PageHeader
         eyebrow="Contact"
         title="Let's talk"
-        intro="Open to software engineering roles and AI product work. Write directly or use the form, which opens your email app."
+        intro="Open to software engineering roles and AI product work. Email me directly or send a message with the form."
       />
 
       <div className="contact-grid">
@@ -132,13 +167,54 @@ export default function Contact() {
               aria-describedby={describe("message")}
             />
           </Field>
+          <div className="form-honey" aria-hidden="true">
+            <label htmlFor="contact-company">Company</label>
+            <input
+              id="contact-company"
+              name="_honey"
+              tabIndex={-1}
+              autoComplete="off"
+              value={honey}
+              onChange={(event) => setHoney(event.target.value)}
+            />
+          </div>
           <motion.button
             type="submit"
             className="button button-solid"
             whileTap={{ scale: 0.97 }}
+            disabled={status === "sending"}
+            aria-busy={status === "sending"}
           >
-            Send message
+            {status === "sending" ? "Sending…" : "Send message"}
           </motion.button>
+          <div className="form-status" role="status" aria-live="polite">
+            <AnimatePresence mode="wait">
+              {status === "sent" ? (
+                <motion.p
+                  key="sent"
+                  className="form-sent"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3, ease }}
+                >
+                  Thanks, your message is on its way. I'll reply to the email you gave.
+                </motion.p>
+              ) : null}
+              {status === "error" ? (
+                <motion.p
+                  key="error"
+                  className="field-error"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3, ease }}
+                >
+                  The message didn't send. Try again, or <a href={mailtoFallback}>email me directly</a>.
+                </motion.p>
+              ) : null}
+            </AnimatePresence>
+          </div>
         </Reveal>
       </div>
     </Page>

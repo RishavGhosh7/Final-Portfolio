@@ -1014,6 +1014,31 @@ h2 {
   justify-self: start;
 }
 
+.contact-form .button:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.form-honey {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.form-status:empty {
+  display: none;
+}
+
+.form-sent {
+  color: #9fd8a6;
+}
+
+.form-status a {
+  color: var(--ink);
+}
+
 /* Footer */
 
 .footer {
