@@ -288,7 +288,8 @@ svg {
 /* Shared */
 
 .page {
-  padding-top: clamp(2.5rem, 7vw, 5.5rem);
+  --page-top: clamp(2.5rem, 7vw, 5.5rem);
+  padding-top: var(--page-top);
   padding-bottom: var(--space-section);
 }
 
@@ -324,8 +325,8 @@ h2 {
 .word-mask {
   display: inline-block;
   overflow: hidden;
-  padding-bottom: 0.08em;
-  margin-bottom: -0.08em;
+  padding: 0 0.12em 0.08em 0;
+  margin: 0 -0.12em -0.08em 0;
   vertical-align: top;
 }
 
@@ -420,9 +421,47 @@ h2 {
 /* Hero */
 
 .hero {
+  --cover-h: min(100vw, 62svh);
+  position: relative;
+  isolation: isolate;
   display: grid;
   gap: clamp(1.5rem, 4vw, 2.5rem);
+  padding-top: calc(var(--cover-h) - 5rem);
   padding-bottom: clamp(1rem, 4vw, 3rem);
+}
+
+.hero-cover {
+  position: absolute;
+  z-index: -1;
+  top: calc(-1 * var(--page-top));
+  left: 50%;
+  width: 100vw;
+  height: calc(var(--page-top) + var(--cover-h));
+  overflow: hidden;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.hero-cover-frame {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 42% 22%;
+}
+
+.hero-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(0deg, var(--bg) 2%, rgba(14, 13, 11, 0.72) 26%, rgba(14, 13, 11, 0) 58%),
+    linear-gradient(180deg, rgba(14, 13, 11, 0.35), rgba(14, 13, 11, 0) 22%);
 }
 
 .hero-kicker {
@@ -1140,24 +1179,42 @@ h2 {
 
 @media (min-width: 1000px) {
   .hero {
-    grid-template-columns: 1fr minmax(20rem, 30rem);
-    grid-template-rows: auto 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
     align-items: end;
-    min-height: calc(100svh - var(--nav-h) - clamp(2.5rem, 7vw, 5.5rem));
+    min-height: calc(100svh - var(--nav-h) - var(--page-top));
+    padding-top: 0;
     padding-bottom: 3rem;
   }
 
   .hero-kicker {
-    grid-column: 1 / -1;
     align-self: start;
-  }
-
-  .hero-name {
-    grid-column: 1 / -1;
+    justify-content: flex-start;
+    gap: 0.5rem 2rem;
   }
 
   .hero-copy {
-    grid-column: 2;
+    max-width: 32rem;
+  }
+
+  .hero-cover {
+    height: calc(100% + var(--page-top));
+  }
+
+  .hero-cover-frame {
+    left: 38%;
+  }
+
+  .hero-cover img {
+    object-position: 42% 18%;
+  }
+
+  .hero-cover::after {
+    left: 38%;
+    background:
+      linear-gradient(90deg, var(--bg) 0%, rgba(14, 13, 11, 0.55) 18%, rgba(14, 13, 11, 0) 42%),
+      linear-gradient(0deg, var(--bg) 0%, rgba(14, 13, 11, 0) 30%),
+      linear-gradient(180deg, rgba(14, 13, 11, 0.4), rgba(14, 13, 11, 0) 18%);
   }
 
   .split {

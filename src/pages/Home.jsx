@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
 import { Link } from "react-router";
 import Page from "../components/Page.jsx";
 import ProjectRow from "../components/ProjectRow.jsx";
@@ -10,9 +11,29 @@ import { education, profile, projects } from "../data/profile.js";
 const masters = education[0];
 
 export default function Home() {
+  const heroRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const coverY = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
+  const coverOpacity = useTransform(scrollYProgress, [0, 0.85], [1, 0.25]);
+
   return (
     <Page>
-      <section className="hero" aria-label="Introduction">
+      <section className="hero" aria-label="Introduction" ref={heroRef}>
+        <div className="hero-cover">
+          <motion.div className="hero-cover-frame" style={{ y: coverY, opacity: coverOpacity }}>
+            <motion.img
+              src="/images/rishav-cover.jpg"
+              alt="Portrait of Rishav Ghosh"
+              width="1024"
+              height="820"
+              fetchPriority="high"
+              initial={{ scale: 1.12, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 1.6, ease }}
+            />
+          </motion.div>
+        </div>
+
         <motion.p
           className="hero-kicker"
           initial={{ opacity: 0 }}
