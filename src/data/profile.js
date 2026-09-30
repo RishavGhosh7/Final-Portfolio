@@ -191,6 +191,7 @@ export const leetcodeBadges = {
     { name: "50 Days Badge 2026", image: "/badges/50-days.png", date: "2026-06-10" },
   ],
   daily: [
+    { name: "Sep 2026", image: "/badges/sep-2026.png", date: "2026-09-30" },
     { name: "Aug 2026", image: "/badges/aug-2026.png", date: "2026-08-31" },
     { name: "Jul 2026", image: "/badges/jul-2026.png", date: "2026-07-31" },
     { name: "Jun 2026", image: "/badges/jun-2026.png", date: "2026-06-30" },
