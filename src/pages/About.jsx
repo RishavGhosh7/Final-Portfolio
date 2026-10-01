@@ -3,7 +3,7 @@ import Page from "../components/Page.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import Reveal from "../components/Reveal.jsx";
 import { riseChild, staggerParent } from "../components/motion.js";
-import { achievements, education, leetcodeBadges, profile, skills } from "../data/profile.js";
+import { achievements, education, leetcodeBadges, leetcodeRating, profile, skills } from "../data/profile.js";
 
 const leetcode = profile.socials.find((social) => social.label === "LeetCode");
 
@@ -120,6 +120,13 @@ export default function About() {
               View profile <span aria-hidden="true">↗</span>
             </a>
           </div>
+          <p className="rating">
+            <span className="rating-value">{leetcodeRating.value}</span>
+            <span className="rating-copy">
+              <span>{leetcodeRating.label}</span>
+              <span>{leetcodeRating.note}</span>
+            </span>
+          </p>
           <BadgeGroup label="Annual medals" badges={leetcodeBadges.annual} />
           <BadgeGroup label="Daily challenge medals" badges={leetcodeBadges.daily} />
         </Reveal>

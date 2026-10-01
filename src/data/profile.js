@@ -185,6 +185,12 @@ export const education = [
   },
 ];
 
+export const leetcodeRating = {
+  value: "1,838",
+  label: "Contest rating",
+  note: "Top 6.9%",
+};
+
 export const leetcodeBadges = {
   annual: [
     { name: "100 Days Badge 2026", image: "/badges/100-days.png", date: "2026-07-30" },
@@ -200,7 +206,8 @@ export const leetcodeBadges = {
 };
 
 export const achievements = [
-  "Delivered production-ready systems from design through development to deployment on Vercel and Render.",
+  "Reached a LeetCode contest rating of 1,838, in the top 6.9%.",
   "Earned multiple LeetCode challenge badges for consistently solving DSA problems.",
   "Earned a 5-star rating in Java on HackerRank.",
+  "Delivered production-ready systems from design through development to deployment on Vercel and Render.",
 ];
