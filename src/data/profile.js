@@ -11,7 +11,7 @@ export const profile = {
   socials: [
     { label: "GitHub", href: "https://github.com/RishavGhosh7" },
     { label: "LinkedIn", href: "https://www.linkedin.com/in/rishav-ghosh-rg7/" },
-    { label: "LeetCode", href: "https://leetcode.com/u/ZgTmaEq5sv/" },
+    { label: "LeetCode", href: "https://leetcode.com/u/RishavGhosh7/" },
     { label: "HackerRank", href: "https://www.hackerrank.com/profile/rishavghosh21nov" },
   ],
 };
