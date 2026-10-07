@@ -1319,6 +1319,21 @@ h2 {
     -webkit-backdrop-filter: blur(22px) saturate(1.35);
   }
 
+  .nav-switcher-scrub {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .nav-switcher-scrub.is-pressed {
+    transform: scale(0.985);
+    transition: transform 0.18s ease;
+  }
+
+  .nav-switcher-scrub .nav-link {
+    touch-action: none;
+  }
+
   .nav-mobile .nav-liquid {
     top: 0.35rem;
     height: calc(100% - 0.7rem);

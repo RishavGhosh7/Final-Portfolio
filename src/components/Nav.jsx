@@ -1,6 +1,6 @@
 import { LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import { useLayoutEffect, useRef, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router";
+import { Link, NavLink, useLocation, useNavigate } from "react-router";
 import { profile } from "../data/profile.js";
 
 const links = [
@@ -46,25 +46,59 @@ const links = [
   },
 ];
 
-const liquidSpring = { type: "spring", stiffness: 380, damping: 28, mass: 0.7 };
+const liquidSpring = { type: "spring", stiffness: 420, damping: 26, mass: 0.65 };
+const scrubSpring = { type: "spring", stiffness: 520, damping: 32, mass: 0.55 };
 
 function isActivePath(pathname, link) {
   if (link.end) return pathname === link.to;
   return pathname === link.to || pathname.startsWith(`${link.to}/`);
 }
 
-function LiquidSwitcher({ pathname, className, ariaLabel, showIcons = false, enableHover = true }) {
+function indexFromPoint(itemRefs, clientX) {
+  let nearest = 0;
+  let nearestDist = Number.POSITIVE_INFINITY;
+
+  for (let i = 0; i < itemRefs.current.length; i += 1) {
+    const node = itemRefs.current[i];
+    if (!node) continue;
+    const box = node.getBoundingClientRect();
+    if (clientX >= box.left && clientX <= box.right) return i;
+    const mid = box.left + box.width / 2;
+    const dist = Math.abs(clientX - mid);
+    if (dist < nearestDist) {
+      nearestDist = dist;
+      nearest = i;
+    }
+  }
+
+  return nearest;
+}
+
+function LiquidSwitcher({
+  pathname,
+  className,
+  ariaLabel,
+  showIcons = false,
+  enableHover = true,
+  enableScrub = false,
+}) {
+  const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
   const trackRef = useRef(null);
+  const switcherRef = useRef(null);
   const itemRefs = useRef([]);
+  const scrubbingRef = useRef(false);
   const [hoverIndex, setHoverIndex] = useState(null);
+  const [scrubIndex, setScrubIndex] = useState(null);
+  const [pressed, setPressed] = useState(false);
   const [pill, setPill] = useState({ x: 0, width: 0, ready: false });
 
   const activeIndex = Math.max(
     0,
     links.findIndex((link) => isActivePath(pathname, link)),
   );
-  const targetIndex = enableHover ? (hoverIndex ?? activeIndex) : activeIndex;
+  const targetIndex = scrubIndex ?? (enableHover ? (hoverIndex ?? activeIndex) : activeIndex);
+  const sliding = scrubIndex !== null || (enableHover && hoverIndex !== null && hoverIndex !== activeIndex);
 
   useLayoutEffect(() => {
     const track = trackRef.current;
@@ -86,6 +120,36 @@ function LiquidSwitcher({ pathname, className, ariaLabel, showIcons = false, ena
     return () => window.removeEventListener("resize", update);
   }, [targetIndex, pathname, showIcons]);
 
+  const beginScrub = (event) => {
+    if (!enableScrub || event.pointerType === "mouse") return;
+    scrubbingRef.current = true;
+    setPressed(true);
+    const next = indexFromPoint(itemRefs, event.clientX);
+    setScrubIndex(next);
+    switcherRef.current?.setPointerCapture?.(event.pointerId);
+  };
+
+  const moveScrub = (event) => {
+    if (!enableScrub || !scrubbingRef.current) return;
+    const next = indexFromPoint(itemRefs, event.clientX);
+    setScrubIndex((current) => (current === next ? current : next));
+  };
+
+  const endScrub = (event) => {
+    if (!enableScrub || !scrubbingRef.current) return;
+    scrubbingRef.current = false;
+    setPressed(false);
+    const next = indexFromPoint(itemRefs, event.clientX);
+    setScrubIndex(null);
+    if (switcherRef.current?.hasPointerCapture?.(event.pointerId)) {
+      switcherRef.current.releasePointerCapture(event.pointerId);
+    }
+    const destination = links[next];
+    if (destination && !isActivePath(pathname, destination)) {
+      navigate(destination.to);
+    }
+  };
+
   return (
     <nav
       className={className}
@@ -93,7 +157,14 @@ function LiquidSwitcher({ pathname, className, ariaLabel, showIcons = false, ena
       ref={trackRef}
       onMouseLeave={enableHover ? () => setHoverIndex(null) : undefined}
     >
-      <div className="nav-switcher">
+      <div
+        className={`nav-switcher${enableScrub ? " nav-switcher-scrub" : ""}${pressed ? " is-pressed" : ""}`}
+        ref={switcherRef}
+        onPointerDown={beginScrub}
+        onPointerMove={moveScrub}
+        onPointerUp={endScrub}
+        onPointerCancel={endScrub}
+      >
         <motion.span
           className="nav-liquid"
           aria-hidden="true"
@@ -104,11 +175,12 @@ function LiquidSwitcher({ pathname, className, ariaLabel, showIcons = false, ena
                   x: pill.x,
                   width: pill.width,
                   opacity: 1,
-                  scaleY: enableHover && hoverIndex !== null && hoverIndex !== activeIndex ? 0.92 : 1,
+                  scaleY: pressed ? 0.9 : sliding ? 0.94 : 1,
+                  scaleX: pressed ? 1.04 : 1,
                 }
               : { opacity: 0 }
           }
-          transition={reduceMotion ? { duration: 0 } : liquidSpring}
+          transition={reduceMotion ? { duration: 0 } : pressed || scrubIndex !== null ? scrubSpring : liquidSpring}
         >
           <span className="nav-liquid-shine" />
         </motion.span>
@@ -127,6 +199,12 @@ function LiquidSwitcher({ pathname, className, ariaLabel, showIcons = false, ena
               onMouseEnter={enableHover ? () => setHoverIndex(index) : undefined}
               onFocus={enableHover ? () => setHoverIndex(index) : undefined}
               onBlur={enableHover ? () => setHoverIndex(null) : undefined}
+              onClick={(event) => {
+                if (enableScrub && event.pointerType !== "mouse") {
+                  // Navigation is handled by the scrub gesture on touch.
+                  event.preventDefault();
+                }
+              }}
             >
               {showIcons ? <span className="nav-icon">{link.icon}</span> : null}
               <span className="nav-label">{link.label}</span>
@@ -177,6 +255,7 @@ export default function Nav() {
             ariaLabel="Primary"
             showIcons
             enableHover={false}
+            enableScrub
           />
         </div>
       </LayoutGroup>
