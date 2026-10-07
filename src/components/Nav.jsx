@@ -1,14 +1,49 @@
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router";
 import { profile } from "../data/profile.js";
-import { ease } from "./motion.js";
 
 const links = [
-  { to: "/", label: "Home", end: true },
-  { to: "/projects", label: "Work" },
-  { to: "/about", label: "About" },
-  { to: "/contact", label: "Contact" },
+  {
+    to: "/",
+    label: "Home",
+    end: true,
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 11.5 12 4.5l8 7V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z" />
+      </svg>
+    ),
+  },
+  {
+    to: "/projects",
+    label: "Work",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3.5" y="7.5" width="17" height="12" rx="2" />
+        <path d="M9 7.5V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1.5" />
+      </svg>
+    ),
+  },
+  {
+    to: "/about",
+    label: "About",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="3.25" />
+        <path d="M5.5 19.5a6.5 6.5 0 0 1 13 0" />
+      </svg>
+    ),
+  },
+  {
+    to: "/contact",
+    label: "Contact",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
+        <path d="m5.5 8 5.7 3.8a1.5 1.5 0 0 0 1.6 0L18.5 8" />
+      </svg>
+    ),
+  },
 ];
 
 const liquidSpring = { type: "spring", stiffness: 380, damping: 28, mass: 0.7 };
@@ -18,7 +53,7 @@ function isActivePath(pathname, link) {
   return pathname === link.to || pathname.startsWith(`${link.to}/`);
 }
 
-function LiquidNav({ pathname }) {
+function LiquidSwitcher({ pathname, className, ariaLabel, showIcons = false, enableHover = true }) {
   const reduceMotion = useReducedMotion();
   const trackRef = useRef(null);
   const itemRefs = useRef([]);
@@ -29,7 +64,7 @@ function LiquidNav({ pathname }) {
     0,
     links.findIndex((link) => isActivePath(pathname, link)),
   );
-  const targetIndex = hoverIndex ?? activeIndex;
+  const targetIndex = enableHover ? (hoverIndex ?? activeIndex) : activeIndex;
 
   useLayoutEffect(() => {
     const track = trackRef.current;
@@ -49,14 +84,14 @@ function LiquidNav({ pathname }) {
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
-  }, [targetIndex, pathname]);
+  }, [targetIndex, pathname, showIcons]);
 
   return (
     <nav
-      className="nav-desktop"
-      aria-label="Primary"
+      className={className}
+      aria-label={ariaLabel}
       ref={trackRef}
-      onMouseLeave={() => setHoverIndex(null)}
+      onMouseLeave={enableHover ? () => setHoverIndex(null) : undefined}
     >
       <div className="nav-switcher">
         <motion.span
@@ -69,7 +104,7 @@ function LiquidNav({ pathname }) {
                   x: pill.x,
                   width: pill.width,
                   opacity: 1,
-                  scaleY: hoverIndex !== null && hoverIndex !== activeIndex ? 0.92 : 1,
+                  scaleY: enableHover && hoverIndex !== null && hoverIndex !== activeIndex ? 0.92 : 1,
                 }
               : { opacity: 0 }
           }
@@ -89,121 +124,62 @@ function LiquidNav({ pathname }) {
               ref={(node) => {
                 itemRefs.current[index] = node;
               }}
-              onMouseEnter={() => setHoverIndex(index)}
-              onFocus={() => setHoverIndex(index)}
-              onBlur={() => setHoverIndex(null)}
+              onMouseEnter={enableHover ? () => setHoverIndex(index) : undefined}
+              onFocus={enableHover ? () => setHoverIndex(index) : undefined}
+              onBlur={enableHover ? () => setHoverIndex(null) : undefined}
             >
+              {showIcons ? <span className="nav-icon">{link.icon}</span> : null}
               <span className="nav-label">{link.label}</span>
             </NavLink>
           );
         })}
       </div>
-
-      <a className="nav-resume" href={profile.resume} download>
-        Resume
-      </a>
     </nav>
   );
 }
 
 export default function Nav() {
   const { pathname } = useLocation();
-  const [openOn, setOpenOn] = useState(null);
-  const open = openOn === pathname;
-  const setOpen = (value) => setOpenOn(value ? pathname : null);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const onKey = (event) => {
-      if (event.key === "Escape") setOpenOn(null);
-    };
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
 
   return (
-    <header className="nav">
-      <div className="wrap nav-inner">
-        <Link className="wordmark" to="/">
-          Rishav Ghosh
-        </Link>
+    <>
+      <header className="nav">
+        <div className="wrap nav-inner">
+          <Link className="wordmark" to="/">
+            Rishav Ghosh
+          </Link>
 
-        <LayoutGroup>
-          <LiquidNav pathname={pathname} />
-        </LayoutGroup>
+          <LayoutGroup id="desktop-nav">
+            <div className="nav-desktop-wrap">
+              <LiquidSwitcher
+                pathname={pathname}
+                className="nav-desktop"
+                ariaLabel="Primary"
+                enableHover
+              />
+              <a className="nav-resume" href={profile.resume} download>
+                Resume
+              </a>
+            </div>
+          </LayoutGroup>
 
-        <button
-          type="button"
-          className="menu-toggle"
-          aria-expanded={open}
-          aria-controls="mobile-menu"
-          onClick={() => setOpen(!open)}
-        >
-          <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
-          <motion.span
-            className="bar"
-            animate={open ? { rotate: 45, y: 4 } : { rotate: 0, y: 0 }}
-            transition={{ duration: 0.3, ease }}
+          <a className="nav-resume nav-resume-mobile" href={profile.resume} download>
+            Resume
+          </a>
+        </div>
+      </header>
+
+      <LayoutGroup id="mobile-nav">
+        <div className="nav-dock">
+          <LiquidSwitcher
+            pathname={pathname}
+            className="nav-mobile"
+            ariaLabel="Primary"
+            showIcons
+            enableHover={false}
           />
-          <motion.span
-            className="bar"
-            animate={open ? { rotate: -45, y: -4 } : { rotate: 0, y: 0 }}
-            transition={{ duration: 0.3, ease }}
-          />
-        </button>
-      </div>
-
-      <AnimatePresence>
-        {open ? (
-          <motion.nav
-            id="mobile-menu"
-            className="mobile-menu"
-            aria-label="Mobile"
-            initial={{ clipPath: "inset(0 0 100% 0)" }}
-            animate={{ clipPath: "inset(0 0 0% 0)" }}
-            exit={{ clipPath: "inset(0 0 100% 0)" }}
-            transition={{ duration: 0.5, ease }}
-          >
-            <motion.ul
-              className="wrap"
-              initial="hidden"
-              animate="show"
-              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06, delayChildren: 0.15 } } }}
-            >
-              {links.map((link, i) => (
-                <motion.li
-                  key={link.to}
-                  variants={{
-                    hidden: { opacity: 0, y: 24 },
-                    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease } },
-                  }}
-                >
-                  <NavLink to={link.to} end={link.end} className="mobile-link">
-                    <span>0{i + 1}</span>
-                    {link.label}
-                  </NavLink>
-                </motion.li>
-              ))}
-              <motion.li
-                className="mobile-extra"
-                variants={{
-                  hidden: { opacity: 0 },
-                  show: { opacity: 1, transition: { duration: 0.5, ease } },
-                }}
-              >
-                <a href={profile.resume} download>
-                  Download resume
-                </a>
-                <a href={`mailto:${profile.email}`}>{profile.email}</a>
-              </motion.li>
-            </motion.ul>
-          </motion.nav>
-        ) : null}
-      </AnimatePresence>
-    </header>
+        </div>
+      </LayoutGroup>
+    </>
   );
 }
